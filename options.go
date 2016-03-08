@@ -25,6 +25,7 @@ type Options struct {
 	TLSKeyFile   string `flag:"tls-key" cfg:"tls_key_file"`
 
 	AuthenticatedEmailsFile  string   `flag:"authenticated-emails-file" cfg:"authenticated_emails_file"`
+	BannedEmailsFile         string   `flag:"banned-emails-file" cfg:"banned_emails_file"`
 	AzureTenant              string   `flag:"azure-tenant" cfg:"azure_tenant"`
 	EmailDomains             []string `flag:"email-domain" cfg:"email_domains"`
 	GitHubOrg                string   `flag:"github-org" cfg:"github_org"`

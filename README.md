@@ -138,7 +138,7 @@ Take note of your `TenantId` if applicable for your situation. The `TenantId` ca
 
 ## Email Authentication
 
-To authorize by email domain use `--email-domain=yourcompany.com`. To authorize individual email addresses use `--authenticated-emails-file=/path/to/file` with one email per line. To authorize all email addresses use `--email-domain=*`.
+To authorize by email domain use `--email-domain=yourcompany.com`. To authorize individual email addresses use `--authenticated-emails-file=/path/to/file` with one email per line. To authorize all email addresses use `--email-domain=*`. To ban individual email addresses use `--banned-emails-file=/path/to/file` with one email per line. Email ban has a higher priority in case it is also listed as an authenticated one.
 
 ## Configuration
 
@@ -156,6 +156,7 @@ Usage of oauth2_proxy:
   -authenticated-emails-file="": authenticate against emails via file (one per line)
   -azure-tenant="common": go to a tenant-specific or common (tenant-independent) endpoint.
   -basic-auth-password="": the password to set when passing the HTTP Basic Auth header
+  -banned-emails-file="": ban emails listed in file (one per line)
   -client-id="": the OAuth Client ID: ie: "123456.apps.googleusercontent.com"
   -client-secret="": the OAuth Client Secret
   -config="": path to config file

@@ -22,24 +22,24 @@ func NewUserMap(usersFile string, done <-chan bool, onUpdate func()) *UserMap {
 	if usersFile != "" {
 		log.Printf("using authenticated emails file %s", usersFile)
 		WatchForUpdates(usersFile, done, func() {
-			um.LoadAuthenticatedEmailsFile()
+			um.LoadEmailsFile()
 			onUpdate()
 		})
-		um.LoadAuthenticatedEmailsFile()
+		um.LoadEmailsFile()
 	}
 	return um
 }
 
-func (um *UserMap) IsValid(email string) (result bool) {
+func (um *UserMap) HasEntry(email string) (result bool) {
 	m := *(*map[string]bool)(atomic.LoadPointer(&um.m))
 	_, result = m[email]
 	return
 }
 
-func (um *UserMap) LoadAuthenticatedEmailsFile() {
+func (um *UserMap) LoadEmailsFile() {
 	r, err := os.Open(um.usersFile)
 	if err != nil {
-		log.Fatalf("failed opening authenticated-emails-file=%q, %s", um.usersFile, err)
+		log.Fatalf("failed opening emails-file=%q, %s", um.usersFile, err)
 	}
 	defer r.Close()
 	csv_reader := csv.NewReader(r)
@@ -48,7 +48,7 @@ func (um *UserMap) LoadAuthenticatedEmailsFile() {
 	csv_reader.TrimLeadingSpace = true
 	records, err := csv_reader.ReadAll()
 	if err != nil {
-		log.Printf("error reading authenticated-emails-file=%q, %s", um.usersFile, err)
+		log.Printf("error reading emails-file=%q, %s", um.usersFile, err)
 		return
 	}
 	updated := make(map[string]bool)
@@ -60,8 +60,9 @@ func (um *UserMap) LoadAuthenticatedEmailsFile() {
 }
 
 func newValidatorImpl(domains []string, usersFile string,
-	done <-chan bool, onUpdate func()) func(string) bool {
+	bannedUsersFile string, done <-chan bool, onUpdate func()) func(string) bool {
 	validUsers := NewUserMap(usersFile, done, onUpdate)
+	bannedUsers := NewUserMap(bannedUsersFile, done, onUpdate)
 
 	var allowAll bool
 	for i, domain := range domains {
@@ -77,11 +78,18 @@ func newValidatorImpl(domains []string, usersFile string,
 			return
 		}
 		email = strings.ToLower(email)
+		var banned = bannedUsers.HasEntry(email)
+
+		if banned {
+			log.Printf("blocked banned email %s", email)
+			return
+		}
+
 		for _, domain := range domains {
 			valid = valid || strings.HasSuffix(email, domain)
 		}
 		if !valid {
-			valid = validUsers.IsValid(email)
+			valid = validUsers.HasEntry(email)
 		}
 		if allowAll {
 			valid = true
@@ -91,6 +99,6 @@ func newValidatorImpl(domains []string, usersFile string,
 	return validator
 }
 
-func NewValidator(domains []string, usersFile string) func(string) bool {
-	return newValidatorImpl(domains, usersFile, nil, func() {})
+func NewValidator(domains []string, usersFile string, bannedUsersFile string) func(string) bool {
+	return newValidatorImpl(domains, usersFile, bannedUsersFile, nil, func() {})
 }
